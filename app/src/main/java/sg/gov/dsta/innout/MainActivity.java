@@ -16,39 +16,37 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private SensorManager sensorManager;
-    private Sensor accelerometer, lightSensor, proximitySensor, magnetSensor;
+    private float lightValue, proximityValue, magnetValue;
 
-    private float accelerationValue, lightValue, proximityValue, magnetValue;
     private TextView resultView, accelerationView, lightView, proximityView,  magnetView;
 
-    private boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
+    private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
 
         // ACCELEROMETER
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
         accelerationView = findViewById(R.id.accelerationView);
 
         // LIGHT
-        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         lightView = findViewById(R.id.lightView);
 
         // PROXIMITY
-        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        Sensor proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_FASTEST);
         proximityView = findViewById(R.id.proximityView);
 
         // MAGNET
-        magnetSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        Sensor magnetSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, magnetSensor, SensorManager.SENSOR_DELAY_NORMAL);
         magnetView = findViewById(R.id.magnetView);
     }
@@ -65,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 x = event.values[0];
                 y = event.values[1];
                 z = event.values[2];
-                accelerationValue = (float) Math.sqrt(x * x + y * y + z * z);
+                float accelerationValue = (float) Math.sqrt(x * x + y * y + z * z);
                 accelerationView.setText("Acceleration: " + accelerationValue);
                 if (accelerationValue >= 10) evaluate();
                 break;
