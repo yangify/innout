@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean isWalking = false;
     private boolean isCovered = false;
 
-    private final MagnetObservatory magnetObservatory = MagnetObservatory.getInstance();
+    private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +61,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int delay = 1000; // 1000 milliseconds == 1 second
         handler.postDelayed(new Runnable() {
             public void run() {
-                magnetObservatory.computeAverage();
-                magnetObservatory.computeVariance();
-                magnetVariance.setText("Magnet variance: " + magnetObservatory.getVariance());
+                magnetometerObservatory.computeAverage();
+                magnetometerObservatory.computeVariance();
+                magnetVariance.setText("Magnet variance: " + magnetometerObservatory.getVariance());
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 z = event.values[2];
                 float magnetValue = (float) Math.sqrt(x * x + y * y + z * z);
                 magnetView.setText("Gauss: " + magnetValue);
-                magnetObservatory.log(magnetValue);
+                magnetometerObservatory.log(magnetValue);
                 break;
         }
         evaluate();
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluateMagnet() {
-        Float magnetVariance = magnetObservatory.getVariance();
+        Float magnetVariance = magnetometerObservatory.getVariance();
         if (magnetVariance == null) return;
         if (magnetVariance < 18) resultView.setText("OUTDOOR");
         else resultView.setText("INDOOR");

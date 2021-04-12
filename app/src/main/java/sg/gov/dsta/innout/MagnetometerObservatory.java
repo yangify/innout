@@ -6,9 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MagnetObservatory {
+public class MagnetometerObservatory {
 
-    private static MagnetObservatory instance;
+    private static MagnetometerObservatory instance;
     private final Map<LocalDateTime, List<Float>> observations;
     private final Integer DELTA = 10;
 
@@ -16,12 +16,12 @@ public class MagnetObservatory {
     private float average = 0;
     private Float variance;
 
-    private MagnetObservatory() {
+    private MagnetometerObservatory() {
         observations = new HashMap<>();
     }
 
-    public static MagnetObservatory getInstance() {
-        if (instance == null) instance = new MagnetObservatory();
+    public static MagnetometerObservatory getInstance() {
+        if (instance == null) instance = new MagnetometerObservatory();
         return instance;
     }
 
