@@ -6,16 +6,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellLocation;
-import android.telephony.CellSignalStrength;
-import android.telephony.PhoneStateListener;
-import android.telephony.ServiceState;
-import android.telephony.SignalStrength;
-import android.telephony.TelephonyManager;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,25 +16,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private TelephonyManager telephonyManager;
-
     private SensorManager sensorManager;
     private Sensor accelerometer, lightSensor, proximitySensor, magnetSensor;
 
-    private float accelerationValue, lightValue, proximityValue, magnetValue, signalValue;
+    private float accelerationValue, lightValue, proximityValue, magnetValue;
+    private TextView resultView, accelerationView, lightView, proximityView,  magnetView;
 
-    private TextView resultView, accelerationView, lightView, proximityView,  magnetView, signalView, numSignalView;
+    private boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // SIGNAL STRENGTH
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        telephonyManager.listen(new PhoneStateListener(), PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-        signalView = findViewById(R.id.signalView);
-        numSignalView = findViewById(R.id.numSignalView);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
@@ -70,11 +53,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         magnetView = findViewById(R.id.magnetView);
     }
 
-    /*
-     * 1. If moving -> evaluate; else -> do nothing
-     * 2. If far -> check light, else -> don check light
-     * 3.
-     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         float x;
@@ -89,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 z = event.values[2];
                 accelerationValue = (float) Math.sqrt(x * x + y * y + z * z);
                 accelerationView.setText("Acceleration: " + accelerationValue);
-                if (accelerationValue >= 11) evaluate();
+                if (accelerationValue >= 10) evaluate();
                 break;
             case Sensor.TYPE_PROXIMITY:
                 // some phone use binary representation for proximity: near or far
@@ -122,12 +100,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public void evaluateLight() {
         if (proximityValue == 0) return;
-        if (isDay() && lightValue <= 1000) resultView.setText("INDOOR");
-        if (!isDay() && lightValue >= 100) resultView.setText("OUTDOOR");
-    }
-
-    public boolean isDay() {
-        return LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
+        if (isDay && lightValue <= 1000 || !isDay && lightValue >= 100) resultView.setText("INDOOR");
+        else resultView.setText("OUTDOOR");
     }
 
     public void evaluateMagnet() {
@@ -135,43 +109,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             resultView.setText("OUTDOOR");
         } else {
             resultView.setText("INDOOR");
-        }
-    }
-
-    public void cellRefresh() {
-        double average = 0;
-        int size = telephonyManager.getAllCellInfo().size();
-        for (CellInfo cellInfo: telephonyManager.getAllCellInfo()) {
-            if (cellInfo instanceof CellInfoLte) {
-                CellInfoLte cellInfoLte = (CellInfoLte) cellInfo;
-                CellSignalStrength cellSignalStrength = cellInfoLte.getCellSignalStrength();
-                average += cellSignalStrength.getDbm() / size;
-            }
-            if (cellInfo instanceof CellInfoGsm) {
-                CellInfoGsm cellInfoGsm = (CellInfoGsm) cellInfo;
-                CellSignalStrength cellSignalStrength = cellInfoGsm.getCellSignalStrength();
-                average += cellSignalStrength.getDbm() / size;
-            }
-            if (cellInfo instanceof CellInfoWcdma) {
-                CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cellInfo;
-                CellSignalStrength cellSignalStrength = cellInfoWcdma.getCellSignalStrength();
-                average += cellSignalStrength.getDbm() / size;
-            }
-        }
-        signalValue = (float) average;
-        signalView.setText("dBm: " + average);
-        numSignalView.setText("num: " + size);
-    }
-
-    class MyPhoneStateListener extends PhoneStateListener {
-
-        @Override
-        public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-            super.onSignalStrengthsChanged(signalStrength);
-            signalValue = signalStrength.getGsmSignalStrength();
-            signalValue = (2 * signalValue) - 113; // -> dBm
-            signalView.setText("dBm: " + signalValue);
-            numSignalView.setText("num: " + signalStrength.getCellSignalStrengths().size());
         }
     }
 }
