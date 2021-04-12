@@ -17,15 +17,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private float lightValue;
+    private float lightValue, proximityValue;
 
-    private TextView resultView, accelerationView, lightView, proximityView, magnetView, magnetVariance;
+    private TextView resultView, walkView, lightView, proximityView, magnetView, magnetVariance;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isWalking = false;
     private boolean isCovered = false;
 
     private final MagnetObservatory magnetObservatory = MagnetObservatory.getInstance();
+
+    private float[] mGravity;
+    private double mAccel;
+    private double mAccelCurrent;
+    private double mAccelLast;
+
+    private int hitCount = 0;
+    private double hitSum = 0;
+    private double hitResult = 0;
+
+    private final int SAMPLE_SIZE = 50; // change this sample size as you want, higher is more precise but slow measure.
+    private final double THRESHOLD = 0.3; // change this threshold as you want, higher is more spike movement
+
+
+    private boolean sensorRegistered = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +53,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // ACCELEROMETER
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
-        accelerationView = findViewById(R.id.accelerationView);
+        walkView = findViewById(R.id.walkView);
+        mAccel = 0.00f;
+        mAccelCurrent = SensorManager.GRAVITY_EARTH;
+        mAccelLast = SensorManager.GRAVITY_EARTH;
 
         // LIGHT
         Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
@@ -78,18 +96,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int sensorType = event.sensor.getType();
         switch (sensorType) {
             case Sensor.TYPE_ACCELEROMETER:
-                x = event.values[0];
-                y = event.values[1];
-                z = event.values[2];
-                float accelerationValue = (float) Math.sqrt(x * x + y * y + z * z);
-                accelerationView.setText("Acceleration: " + accelerationValue);
-                if (accelerationValue >= 10) evaluate();
+                mGravity = event.values.clone();
+                // Shake detection
+                x = mGravity[0];
+                y = mGravity[1];
+                z = mGravity[2];
+                mAccelLast = mAccelCurrent;
+                mAccelCurrent = Math.sqrt(x * x + y * y + z * z);
+                double delta = mAccelCurrent - mAccelLast;
+                mAccel = mAccel * 0.9f + delta;
+                if (hitCount <= SAMPLE_SIZE) {
+                    hitCount++;
+                    hitSum += Math.abs(mAccel);
+                } else {
+                    hitResult = hitSum / SAMPLE_SIZE;
+                    isWalking = hitResult > THRESHOLD;
+                    hitCount = 0;
+                    hitSum = 0;
+                    hitResult = 0;
+                }
+                walkView.setText("Moving?: " + isWalking);
                 break;
             case Sensor.TYPE_PROXIMITY:
                 // some phone use binary representation for proximity: near or far
-                float proximityValue = event.values[0];
+                proximityValue = event.values[0];
                 proximityView.setText("Centimeters: " + proximityValue);
-                isCovered = proximityValue == 5;
+                isCovered = proximityValue == 0;
                 break;
             case Sensor.TYPE_LIGHT:
                 lightValue = event.values[0];
@@ -113,8 +145,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluate() {
-        if (!isCovered) evaluateLight();
-        if (isWalking) evaluateMagnet();
+        if (!isWalking) return;
+        if (isCovered) evaluateMagnet();
+        else evaluateLight();
     }
 
     public void evaluateLight() {
@@ -125,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void evaluateMagnet() {
         Float magnetVariance = magnetObservatory.getVariance();
         if (magnetVariance == null) return;
-        if (magnetVariance < 18) resultView.setText("OUTDOOR");
-        else resultView.setText("INDOOR");
+        if (magnetVariance > 18) resultView.setText("INDOOR");
+        else resultView.setText("OUTDOOR");
     }
 }
