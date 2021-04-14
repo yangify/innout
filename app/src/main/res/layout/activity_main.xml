@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="38sp"
-        android:id="@+id/accelerationView" />
+        android:id="@+id/walkView" />
 
     <TextView
         android:layout_width="match_parent"
@@ -43,12 +43,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="38sp"
-        android:id="@+id/signalView" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="38sp"
-        android:id="@+id/numSignalView" />
+        android:id="@+id/magnetVariance" />
 
 </LinearLayout>
