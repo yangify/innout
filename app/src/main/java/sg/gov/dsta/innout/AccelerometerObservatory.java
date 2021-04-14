@@ -7,8 +7,8 @@ public class AccelerometerObservatory {
     private boolean isWalking;
 
     private double acceleration;
-    private double currentAcceleration;
-    private double previousAcceleration;
+    private double currentObservation;
+    private double previousObservation;
     private double delta;
 
     private int count = 0;
@@ -26,9 +26,9 @@ public class AccelerometerObservatory {
     }
 
     public void log(float observation) {
-        previousAcceleration = currentAcceleration;
-        currentAcceleration = observation;
-        delta = currentAcceleration - previousAcceleration;
+        previousObservation = currentObservation;
+        currentObservation = observation;
+        delta = currentObservation - previousObservation;
         acceleration = acceleration * 0.9f + delta;
 
         if (count <= SAMPLE_SIZE) {
