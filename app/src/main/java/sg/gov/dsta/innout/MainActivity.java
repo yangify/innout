@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,11 +17,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private float lightValue, proximityValue, magnetValue;
+    private float lightValue;
 
-    private TextView resultView, accelerationView, lightView, proximityView,  magnetView;
+    private TextView resultView, accelerationView, lightView, proximityView, magnetView, magnetVariance;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
+    private boolean isWalking = false;
+    private boolean isCovered = false;
+
+    private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // ACCELEROMETER
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
         accelerationView = findViewById(R.id.accelerationView);
 
         // LIGHT
@@ -49,6 +54,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Sensor magnetSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, magnetSensor, SensorManager.SENSOR_DELAY_NORMAL);
         magnetView = findViewById(R.id.magnetView);
+        magnetVariance = findViewById(R.id.magnetVariance);
+
+        // TIME
+        Handler handler = new Handler();
+        int delay = 1000; // 1000 milliseconds == 1 second
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                magnetometerObservatory.computeAverage();
+                magnetometerObservatory.computeVariance();
+                magnetVariance.setText("Magnet variance: " + magnetometerObservatory.getVariance());
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     @Override
@@ -69,8 +87,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
             case Sensor.TYPE_PROXIMITY:
                 // some phone use binary representation for proximity: near or far
-                proximityValue = event.values[0];
+                float proximityValue = event.values[0];
                 proximityView.setText("Centimeters: " + proximityValue);
+                isCovered = proximityValue == 5;
                 break;
             case Sensor.TYPE_LIGHT:
                 lightValue = event.values[0];
@@ -80,10 +99,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 x = event.values[0];
                 y = event.values[1];
                 z = event.values[2];
-                magnetValue = (float) Math.sqrt(x * x + y * y + z * z);
+                float magnetValue = (float) Math.sqrt(x * x + y * y + z * z);
                 magnetView.setText("Gauss: " + magnetValue);
+                magnetometerObservatory.log(magnetValue);
                 break;
         }
+        evaluate();
     }
 
     @Override
@@ -92,21 +113,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluate() {
-        evaluateLight();
-//        evaluateMagnet();
+        if (!isCovered) evaluateLight();
+        if (isWalking) evaluateMagnet();
     }
 
     public void evaluateLight() {
-        if (proximityValue == 0) return;
         if (isDay && lightValue <= 1000 || !isDay && lightValue >= 100) resultView.setText("INDOOR");
         else resultView.setText("OUTDOOR");
     }
 
     public void evaluateMagnet() {
-        if (magnetValue > 80) {
-            resultView.setText("OUTDOOR");
-        } else {
-            resultView.setText("INDOOR");
-        }
+        Float magnetVariance = magnetometerObservatory.getVariance();
+        if (magnetVariance == null) return;
+        if (magnetVariance < 18) resultView.setText("OUTDOOR");
+        else resultView.setText("INDOOR");
     }
 }
