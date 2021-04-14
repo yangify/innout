@@ -5,21 +5,31 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.GnssMeasurement;
+import android.location.GnssMeasurementsEvent;
+import android.location.GnssStatus;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private final String TAG = "MAIN ACTIVITY";
 
+    private int numVisibleSatellite;
     private float lightValue;
 
     private TextView resultView, walkView, lightView, proximityView, magnetView, magnetVariance;
+    private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isWalking = false;
@@ -28,10 +38,59 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
 
+    private final GnssMeasurementsEvent.Callback gnssMeasurementsEventCallback = new GnssMeasurementsEvent.Callback() {
+        @Override
+        public void onGnssMeasurementsReceived(GnssMeasurementsEvent event) {
+            Collection<GnssMeasurement> measurements = event.getMeasurements();
+            numVisibleSatellite = measurements.size();
+
+            double cnrAverage = 0;
+            for (GnssMeasurement gnssMeasurement : measurements) {
+                cnrAverage += gnssMeasurement.getCn0DbHz() / numVisibleSatellite;
+            }
+
+            satelliteCountView.setText("Number of satellite: " + numVisibleSatellite);
+            satelliteCnrView.setText("CNR: " + cnrAverage);
+        }
+    };
+
+    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
+        @Override
+        public void onSatelliteStatusChanged(GnssStatus status) {
+            int numStatusSatellite = status.getSatelliteCount();
+
+            double moreThanNinety = 0;
+            for (int i = 0; i < numStatusSatellite; i++) {
+                moreThanNinety += status.getAzimuthDegrees(i) > 90 ? 1 : 0;
+            }
+            double proportionMoreThanNinety = moreThanNinety / numStatusSatellite;
+
+            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
+            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
+
+        // GNSS
+        locationManager.registerGnssMeasurementsCallback(gnssMeasurementsEventCallback);
+        locationManager.registerGnssStatusCallback(gnssStatusCallback);
+
+        satelliteCountView = findViewById(R.id.satelliteCountView);
+        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
+        satelliteCnrView = findViewById(R.id.satelliteCnrView);
+        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
+
+        satelliteCountView.setText("Number of satellite: " + 0);
+        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
+        satelliteCnrView.setText("CNR: " + 0);
+        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
@@ -109,13 +168,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 
     public void evaluate() {
         if (!isWalking) return;
-        if (isCovered) evaluateMagnet();
-        else evaluateLight();
+//        if (!isCovered) evaluateLight();
+//        else evaluateGnss();
+        evaluateGnss();
     }
 
     public void evaluateLight() {
@@ -126,7 +185,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void evaluateMagnet() {
         Float magnetVariance = magnetometerObservatory.getVariance();
         if (magnetVariance == null) return;
-        if (magnetVariance > 18) resultView.setText("INDOOR");
-        else resultView.setText("OUTDOOR");
+        if (magnetVariance > 18) {
+            resultView.setText("INDOOR");
+        } else {
+            resultView.setText("OUTDOOR");
+        }
+    }
+
+    public void evaluateGnss() {
+        if (numVisibleSatellite > 10) {
+            resultView.setText("OUTDOOR");
+        } else {
+            resultView.setText("INDOOR");
+        }
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
     }
 }
