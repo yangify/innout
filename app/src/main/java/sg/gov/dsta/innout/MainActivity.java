@@ -25,9 +25,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean isWalking = false;
     private boolean isCovered = false;
 
-    private final MagnetObservatory magnetObservatory = MagnetObservatory.getInstance();
+    private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +62,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int delay = 1000; // 1000 milliseconds == 1 second
         handler.postDelayed(new Runnable() {
             public void run() {
-                magnetObservatory.computeAverage();
-                magnetObservatory.computeVariance();
-                magnetVariance.setText("Magnet variance: " + magnetObservatory.getVariance());
+                magnetometerObservatory.computeAverage();
+                magnetometerObservatory.computeVariance();
+                magnetVariance.setText("Magnet variance: " + magnetometerObservatory.getVariance());
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -100,8 +99,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             case Sensor.TYPE_MAGNETIC_FIELD:
                 float magnetValue = (float) aggregation;
-                magnetObservatory.log(magnetValue);
+                magnetometerObservatory.log(magnetValue);
                 magnetView.setText("Gauss: " + magnetValue);
+                magnetometerObservatory.log(magnetValue);
                 break;
         }
         evaluate();
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluateMagnet() {
-        Float magnetVariance = magnetObservatory.getVariance();
+        Float magnetVariance = magnetometerObservatory.getVariance();
         if (magnetVariance == null) return;
         if (magnetVariance > 18) resultView.setText("INDOOR");
         else resultView.setText("OUTDOOR");
