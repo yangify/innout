@@ -23,7 +23,7 @@ import java.util.Collection;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
-    private final String TAG = "MAIN ACTIVITY";
+    private final String TAG = "MAIN_ACTIVITY";
 
     private double lightProb = 0.5;
     private double gnssProb = 0.5;
