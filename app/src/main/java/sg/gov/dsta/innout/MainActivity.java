@@ -25,14 +25,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private int numVisibleSatellite;
+    private int numVisibleSatellite = -1;
     private float lightValue;
 
-    private TextView resultView, walkView, lightView, proximityView, magnetView, magnetVariance;
+    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVariance;
     private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isMoving = false;
+    private boolean isCovered = true;
 
     private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
@@ -70,8 +71,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             double proportionMoreThanNinety = moreThanNinety / numStatusSatellite;
 
-            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
-            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
+//            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
+//            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
         }
     };
 
@@ -88,19 +89,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         locationManager.registerGnssStatusCallback(gnssStatusCallback);
 
         satelliteCountView = findViewById(R.id.satelliteCountView);
-        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
         satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
         satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
-        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
+//        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
+//        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
 
-        satelliteCountView.setText("Number of satellite: " + 0);
-        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
-        satelliteCnrMeanView.setText("CNR mean: " + 0);
-        satelliteCnrVarianceView.setText("CNR variance: " + 0);
-        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
+        satelliteCountView.setText("Number of satellite: " + null);
+        satelliteCnrMeanView.setText("CNR mean: " + null);
+        satelliteCnrVarianceView.setText("CNR variance: " + null);
+//        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
+//        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
+        calculationView = findViewById(R.id.calculationView);
 
         // ACCELEROMETER
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -153,8 +155,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
 
             case Sensor.TYPE_PROXIMITY:
-                // some phone use binary representation for proximity: near or far
-                proximityView.setText("Covered?: " + (x == 0));
+                // most phone use binary representation for proximity: near/0 or far/5
+                isCovered = x == 0;
+                proximityView.setText("Covered?: " + isCovered);
                 break;
 
             case Sensor.TYPE_LIGHT:
@@ -177,13 +180,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluate() {
-        double lightWeight = 0.4;
-        double gnssWeight = 0.4;
-        double magnetWeight = 0.2;
+        double lightWeight = 1.0 / 3;
+        double gnssWeight = 1.0 / 3;
+        double magnetWeight = 1.0 / 3;
 
         if (!isMoving) return;
-        double prob = lightWeight * evaluateLight() + gnssWeight + evaluateGnss() + magnetWeight + evaluateMagnet();
-        if (prob > 0.5) {
+        double lightProb = evaluateLight();
+        double gnssProb = evaluateGnss();
+        double magnetProb = evaluateMagnet();
+
+        double prob = lightWeight * lightProb + gnssWeight * gnssProb + magnetWeight * magnetProb;
+        calculationView.setText(String.format("Formula: (%s * %s) + (%s * %s) + (%s * %s) = %s", lightWeight, lightProb, gnssWeight, gnssProb, magnetWeight, magnetProb, prob));
+
+        if (prob == 0.5) {
+            setLoading();
+        } else if (prob > 0.5) {
             setIndoor();
         } else {
             setOutdoor();
@@ -191,18 +202,47 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     // indoor = 1; outdoor = 0
-    public int evaluateLight() {
-        return isDay && lightValue <= 1000 || !isDay && lightValue >= 100 ? 1 : 0;
+    // Threshold: (Night indoor) 100 - 1000 (Day indoor)
+    public double evaluateLight() {
+        if (isCovered) return 0.5;
+        double mDay = -0.001;
+        double cDay = 1.5;
+        double probDay = minMax(mDay * lightValue + cDay);
+
+        double mNight = 0.0025;
+        double cNight = -0.25;
+        double probNight = minMax(mNight * lightValue + cNight);
+
+        return isDay ? probDay : probNight;
     }
 
-    public int evaluateMagnet() {
+    // indoor = 1; outdoor = 0
+    // Threshold: (Outdoor) 0-18-30 (Indoor)
+    public double evaluateMagnet() {
         Float magnetVariance = magnetometerObservatory.getVariance();
-        if (magnetVariance == null) return -1;
-        return magnetVariance > 18 ? 1 : 0;  // indoor = 1; outdoor = 0
+        if (magnetVariance == null) return 0.5;
+
+        double mMagnet = 1.0 / 30;
+        double cMagnent = 0;
+
+        return minMax(mMagnet * magnetVariance + cMagnent);
     }
 
-    public int evaluateGnss() {
-        return numVisibleSatellite < 8 ? 1 : 0;  // indoor = 1; outdoor = 0
+    // indoor = 1; outdoor = 0
+    // Threshold: (Indoor) 1-7-15 (Outdoor)
+    public double evaluateGnss() {
+        if (numVisibleSatellite < 0) return 0.5;
+        double mGnss = -0.083333;
+        double cGnss = 1.25;
+        return minMax(mGnss * numVisibleSatellite + cGnss);
+    }
+
+    public double minMax(double score) {
+        return Math.min(Math.max(score, 0), 1);
+    }
+
+    public void setLoading() {
+        resultView.setText("LOADING");
     }
 
     public void setIndoor() {

@@ -19,6 +19,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="38sp"
+        android:id="@+id/calculationView" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="38sp"
         android:id="@+id/satelliteCountView" />
 
     <TextView
@@ -33,17 +39,17 @@
         android:layout_marginTop="38sp"
         android:id="@+id/satelliteCnrVarianceView" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="38sp"
-        android:id="@+id/satelliteStatusCountView" />
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="38sp"-->
+<!--        android:id="@+id/satelliteStatusCountView" />-->
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="38sp"
-        android:id="@+id/satelliteAzimuthView" />
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="38sp"-->
+<!--        android:id="@+id/satelliteAzimuthView" />-->
 
     <TextView
         android:layout_width="match_parent"
