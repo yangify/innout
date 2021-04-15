@@ -165,8 +165,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
 
             case Sensor.TYPE_LIGHT:
-                lightValue = event.values[0];
-                lightView.setText("Lux: " + lightValue);
+                lightValue = x;
+                lightView.setText("Lux: " + x);
                 break;
 
             case Sensor.TYPE_MAGNETIC_FIELD:
