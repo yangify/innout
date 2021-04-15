@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float lightValue;
 
     private TextView resultView, walkView, lightView, proximityView, magnetView, magnetVariance;
-    private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrView, satelliteAzimuthView;
+    private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isWalking = false;
@@ -49,8 +49,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 cnrAverage += gnssMeasurement.getCn0DbHz() / numVisibleSatellite;
             }
 
+            double cnrVariance = 0;
+            for (GnssMeasurement gnssMeasurement : measurements) {
+                cnrVariance += Math.pow(gnssMeasurement.getCn0DbHz() - cnrAverage, 2) / numVisibleSatellite;
+            }
+
             satelliteCountView.setText("Number of satellite: " + numVisibleSatellite);
-            satelliteCnrView.setText("CNR: " + cnrAverage);
+            satelliteCnrMeanView.setText("CNR mean: " + cnrAverage);
+            satelliteCnrVarianceView.setText("CNR variance: " + cnrVariance);
         }
     };
 
@@ -84,12 +90,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         satelliteCountView = findViewById(R.id.satelliteCountView);
         satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
-        satelliteCnrView = findViewById(R.id.satelliteCnrView);
+        satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
+        satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
         satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
 
         satelliteCountView.setText("Number of satellite: " + 0);
         satelliteStatusCountView.setText("Number of satellite by status: " + 0);
-        satelliteCnrView.setText("CNR: " + 0);
+        satelliteCnrMeanView.setText("CNR mean: " + 0);
+        satelliteCnrVarianceView.setText("CNR variance: " + 0);
         satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -193,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluateGnss() {
-        if (numVisibleSatellite > 10) {
+        if (numVisibleSatellite >= 8) {
             resultView.setText("OUTDOOR");
         } else {
             resultView.setText("INDOOR");
