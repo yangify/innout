@@ -1,8 +1,8 @@
-package sg.gov.dsta.innout;
+package sg.gov.dsta.innout.observatory;
 
 import java.util.HashMap;
 
-public class MagnetometerObservatory extends TimeBasedObservatory{
+public class MagnetometerObservatory extends TimeBasedObservatory {
 
     private static MagnetometerObservatory instance;
 

@@ -21,6 +21,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
+import sg.gov.dsta.innout.observatory.AccelerometerObservatory;
+import sg.gov.dsta.innout.observatory.MagnetometerObservatory;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private final String TAG = "MAIN_ACTIVITY";

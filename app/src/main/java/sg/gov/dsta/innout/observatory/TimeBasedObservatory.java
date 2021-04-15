@@ -1,4 +1,4 @@
-package sg.gov.dsta.innout;
+package sg.gov.dsta.innout.observatory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

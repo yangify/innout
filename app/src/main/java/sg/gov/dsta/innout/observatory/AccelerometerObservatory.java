@@ -1,4 +1,4 @@
-package sg.gov.dsta.innout;
+package sg.gov.dsta.innout.observatory;
 
 public class AccelerometerObservatory {
 
