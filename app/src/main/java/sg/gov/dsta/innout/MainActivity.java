@@ -25,6 +25,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN ACTIVITY";
 
+    private double lightProb = 0.5;
+    private double gnssProb = 0.5;
+    private double magnetProb = 0.5;
+
     private int numVisibleSatellite = -1;
     private float lightValue;
 
@@ -180,14 +184,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluate() {
-        double lightWeight = 1.0 / 3;
-        double gnssWeight = 1.0 / 3;
-        double magnetWeight = 1.0 / 3;
-
         if (!isMoving) return;
-        double lightProb = evaluateLight();
-        double gnssProb = evaluateGnss();
-        double magnetProb = evaluateMagnet();
+
+        double lightWeight = 0.325;
+        double gnssWeight = 0.400;
+        double magnetWeight = 0.275;
+
+        evaluateSensors();
 
         double prob = lightWeight * lightProb + gnssWeight * gnssProb + magnetWeight * magnetProb;
         calculationView.setText(String.format("(%s * %s) + (%s * %s) + (%s * %s) = %s", lightWeight, lightProb, gnssWeight, gnssProb, magnetWeight, magnetProb, prob));
@@ -201,10 +204,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    public void evaluateSensors() {
+        evaluateLight();
+        evaluateGnss();
+        evaluateMagnet();
+    }
+
     // indoor = 1; outdoor = 0
     // Threshold: (Night indoor) 100 - 1000 (Day indoor)
-    public double evaluateLight() {
-        if (isCovered) return 0.5;
+    public void evaluateLight() {
+        if (isCovered) return;
+
         double mDay = -0.001;
         double cDay = 1.5;
         double probDay = minMax(mDay * lightValue + cDay);
@@ -213,28 +223,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double cNight = -0.25;
         double probNight = minMax(mNight * lightValue + cNight);
 
-        return isDay ? probDay : probNight;
+        lightProb = isDay ? probDay : probNight;
     }
 
     // indoor = 1; outdoor = 0
     // Threshold: (Outdoor) 0-18-30 (Indoor)
-    public double evaluateMagnet() {
+    public void evaluateMagnet() {
         Float magnetVariance = magnetometerObservatory.getVariance();
-        if (magnetVariance == null) return 0.5;
 
         double mMagnet = 1.0 / 30;
         double cMagnent = 0;
 
-        return minMax(mMagnet * magnetVariance + cMagnent);
+        magnetProb = magnetVariance != null ? minMax(mMagnet * magnetVariance + cMagnent) : 0.5;
     }
 
     // indoor = 1; outdoor = 0
     // Threshold: (Indoor) 1-7-15 (Outdoor)
-    public double evaluateGnss() {
-        if (numVisibleSatellite < 0) return 0.5;
+    public void evaluateGnss() {
         double mGnss = -0.083333;
         double cGnss = 1.25;
-        return minMax(mGnss * numVisibleSatellite + cGnss);
+
+        gnssProb = numVisibleSatellite < 0 ? 0.5 : minMax(mGnss * numVisibleSatellite + cGnss);
     }
 
     public double minMax(double score) {
