@@ -75,8 +75,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             double proportionMoreThanNinety = moreThanNinety / numStatusSatellite;
 
-//            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
-//            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
+            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
+            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
         }
     };
 
@@ -95,14 +95,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         satelliteCountView = findViewById(R.id.satelliteCountView);
         satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
         satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
-//        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
-//        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
+        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
+        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
 
         satelliteCountView.setText("Number of satellite: " + null);
         satelliteCnrMeanView.setText("CNR mean: " + null);
         satelliteCnrVarianceView.setText("CNR variance: " + null);
-//        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
-//        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
+        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
+        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
