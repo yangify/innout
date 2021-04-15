@@ -32,8 +32,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
-    private boolean isWalking = false;
-    private boolean isCovered = false;
+    private boolean isMoving = false;
 
     private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
@@ -149,14 +148,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (sensorType) {
             case Sensor.TYPE_ACCELEROMETER:
                 accelerometerObservatory.log((float) aggregation);
-                isWalking = accelerometerObservatory.getWalkingStatus();
-                walkView.setText("Moving?: " + isWalking);
+                isMoving = accelerometerObservatory.getWalkingStatus();
+                walkView.setText("Moving?: " + isMoving);
                 break;
 
             case Sensor.TYPE_PROXIMITY:
                 // some phone use binary representation for proximity: near or far
-                proximityView.setText("Proximity: " + x);
-                isCovered = x == 0;
+                proximityView.setText("Covered?: " + (x == 0));
                 break;
 
             case Sensor.TYPE_LIGHT:
@@ -179,33 +177,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void evaluate() {
-        if (!isWalking) return;
-//        if (!isCovered) evaluateLight();
-//        else evaluateGnss();
-        evaluateGnss();
+        double lightWeight = 0.4;
+        double gnssWeight = 0.4;
+        double magnetWeight = 0.2;
+
+        if (!isMoving) return;
+        double prob = lightWeight * evaluateLight() + gnssWeight + evaluateGnss() + magnetWeight + evaluateMagnet();
+        if (prob > 0.5) {
+            setIndoor();
+        } else {
+            setOutdoor();
+        }
     }
 
-    public void evaluateLight() {
-        if (isDay && lightValue <= 1000 || !isDay && lightValue >= 100) resultView.setText("INDOOR");
-        else resultView.setText("OUTDOOR");
+    // indoor = 1; outdoor = 0
+    public int evaluateLight() {
+        return isDay && lightValue <= 1000 || !isDay && lightValue >= 100 ? 1 : 0;
     }
 
-    public void evaluateMagnet() {
+    public int evaluateMagnet() {
         Float magnetVariance = magnetometerObservatory.getVariance();
-        if (magnetVariance == null) return;
-        if (magnetVariance > 18) {
-            resultView.setText("INDOOR");
-        } else {
-            resultView.setText("OUTDOOR");
-        }
+        if (magnetVariance == null) return -1;
+        return magnetVariance > 18 ? 1 : 0;  // indoor = 1; outdoor = 0
     }
 
-    public void evaluateGnss() {
-        if (numVisibleSatellite >= 8) {
-            resultView.setText("OUTDOOR");
-        } else {
-            resultView.setText("INDOOR");
-        }
+    public int evaluateGnss() {
+        return numVisibleSatellite < 8 ? 1 : 0;  // indoor = 1; outdoor = 0
+    }
+
+    public void setIndoor() {
+        resultView.setText("INDOOR");
+    }
+
+    public void setOutdoor() {
+        resultView.setText("OUTDOOR");
     }
 
     @Override
