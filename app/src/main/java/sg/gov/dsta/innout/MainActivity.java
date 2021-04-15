@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float lightValue;
 
     private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVariance;
-    private TextView satelliteCountView, satelliteStatusCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteAzimuthView;
+    private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteStatusCountView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isMoving = false;
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double magnetProb = evaluateMagnet();
 
         double prob = lightWeight * lightProb + gnssWeight * gnssProb + magnetWeight * magnetProb;
-        calculationView.setText(String.format("Formula: (%s * %s) + (%s * %s) + (%s * %s) = %s", lightWeight, lightProb, gnssWeight, gnssProb, magnetWeight, magnetProb, prob));
+        calculationView.setText(String.format("(%s * %s) + (%s * %s) + (%s * %s) = %s", lightWeight, lightProb, gnssWeight, gnssProb, magnetWeight, magnetProb, prob));
 
         if (prob == 0.5) {
             setLoading();
