@@ -31,29 +31,29 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />
 
-        <TextView
-            android:id="@+id/satelliteCnrMeanView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="38sp" />
+<!--        <TextView-->
+<!--            android:id="@+id/satelliteCnrMeanView"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="38sp" />-->
 
-        <TextView
-            android:id="@+id/satelliteCnrVarianceView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="38sp" />
+<!--        <TextView-->
+<!--            android:id="@+id/satelliteCnrVarianceView"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="38sp" />-->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="38sp"
-            android:id="@+id/satelliteStatusCountView" />
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="38sp"-->
+<!--            android:id="@+id/satelliteStatusCountView" />-->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="38sp"
-            android:id="@+id/satelliteAzimuthView" />
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="38sp"-->
+<!--            android:id="@+id/satelliteAzimuthView" />-->
 
         <TextView
             android:id="@+id/walkView"
@@ -80,7 +80,13 @@
             android:layout_marginTop="38sp" />
 
         <TextView
-            android:id="@+id/magnetVariance"
+            android:id="@+id/magnetVarianceView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
+
+        <TextView
+            android:id="@+id/temperatureView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />

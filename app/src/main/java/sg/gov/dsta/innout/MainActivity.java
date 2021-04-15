@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int numVisibleSatellite = -1;
     private float lightValue;
 
-    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVariance;
+    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVarianceView, temperatureView;
     private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteStatusCountView, satelliteAzimuthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
@@ -130,7 +130,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Sensor magnetSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, magnetSensor, SensorManager.SENSOR_DELAY_NORMAL);
         magnetView = findViewById(R.id.magnetView);
-        magnetVariance = findViewById(R.id.magnetVariance);
+        magnetVarianceView = findViewById(R.id.magnetVarianceView);
+
+        // TEMPERATURE
+        Sensor temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+        sensorManager.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        temperatureView = findViewById(R.id.temperatureView);
 
         // TIME
         Handler handler = new Handler();
@@ -139,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void run() {
                 magnetometerObservatory.computeAverage();
                 magnetometerObservatory.computeVariance();
-                magnetVariance.setText("Magnet variance: " + magnetometerObservatory.getVariance());
+                magnetVarianceView.setText("Magnet variance: " + magnetometerObservatory.getVariance());
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -177,6 +182,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetometerObservatory.log(magnetValue);
                 magnetView.setText("Gauss: " + magnetValue);
                 magnetometerObservatory.log(magnetValue);
+                break;
+
+            case Sensor.TYPE_AMBIENT_TEMPERATURE:
+                temperatureView.setText("Temperature: " + x);
                 break;
         }
         evaluate();
