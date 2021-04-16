@@ -3,11 +3,9 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="38sp"
         tools:context=".MainActivity">
@@ -18,6 +16,18 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp"
             android:textSize="32sp" />
+
+        <TextView
+            android:id="@+id/walkView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
+
+        <TextView
+            android:id="@+id/proximityView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
 
         <TextView
             android:id="@+id/calculationView"
@@ -31,38 +41,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />
 
-<!--        <TextView-->
-<!--            android:id="@+id/satelliteCnrMeanView"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="38sp" />-->
-
-<!--        <TextView-->
-<!--            android:id="@+id/satelliteCnrVarianceView"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="38sp" />-->
-
-<!--        <TextView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="38sp"-->
-<!--            android:id="@+id/satelliteStatusCountView" />-->
-
-<!--        <TextView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="38sp"-->
-<!--            android:id="@+id/satelliteAzimuthView" />-->
-
         <TextView
-            android:id="@+id/walkView"
+            android:id="@+id/satelliteCnrMeanView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />
 
         <TextView
-            android:id="@+id/proximityView"
+            android:id="@+id/satelliteCnrVarianceView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />
@@ -86,7 +72,13 @@
             android:layout_marginTop="38sp" />
 
         <TextView
-            android:id="@+id/temperatureView"
+            android:id="@+id/wifiCountView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
+
+        <TextView
+            android:id="@+id/wifiAverageStrengthView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />

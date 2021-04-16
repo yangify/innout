@@ -1,16 +1,20 @@
 package sg.gov.dsta.innout;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
-import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
@@ -20,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 import sg.gov.dsta.innout.observatory.AccelerometerObservatory;
 import sg.gov.dsta.innout.observatory.MagnetometerObservatory;
@@ -28,15 +33,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final String TAG = "MAIN_ACTIVITY";
 
-    private double lightProb = 0.5;
-    private double gnssProb = 0.5;
-    private double magnetProb = 0.5;
+    private double gnssProb, lightProb, magnetProb, wifiProb = 0.5;
 
     private int numVisibleSatellite = -1;
+    private int numVisibleAp = -1;
+    private double meanWifiStrength = -1;
     private float lightValue;
 
-    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVarianceView, temperatureView;
-    private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteStatusCountView, satelliteAzimuthView;
+    private TextView resultView, calculationView, walkView, proximityView;
+    private TextView lightView, magnetView, magnetVarianceView;
+    private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView;
+    private TextView wifiCountView, wifiAverageStrengthView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isMoving = false;
@@ -44,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
+
+    private WifiManager wifiManager;
 
     private final GnssMeasurementsEvent.Callback gnssMeasurementsEventCallback = new GnssMeasurementsEvent.Callback() {
         @Override
@@ -67,19 +76,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     };
 
-    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
+    BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
         @Override
-        public void onSatelliteStatusChanged(GnssStatus status) {
-            int numStatusSatellite = status.getSatelliteCount();
+        public void onReceive(Context c, Intent intent) {
+            boolean success = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false);
+            if (!success) return;
+            List<ScanResult> scanResults = wifiManager.getScanResults();
 
-            double moreThanNinety = 0;
-            for (int i = 0; i < numStatusSatellite; i++) {
-                moreThanNinety += status.getAzimuthDegrees(i) > 90 ? 1 : 0;
+            numVisibleAp = scanResults.size();
+            meanWifiStrength = 0.0;
+            for (ScanResult result : scanResults) {
+                meanWifiStrength += (double) result.level / numVisibleAp;
             }
-            double proportionMoreThanNinety = moreThanNinety / numStatusSatellite;
 
-            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
-            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
+            wifiCountView.setText("Number of Wifi: " + numVisibleAp);
+            wifiAverageStrengthView.setText("Average wifi strength: " + meanWifiStrength);
         }
     };
 
@@ -88,24 +99,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
+        // WIFI
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        wifiCountView = findViewById(R.id.wifiCountView);
+        wifiAverageStrengthView = findViewById(R.id.wifiAverageStrengthView);
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        registerReceiver(wifiScanReceiver, intentFilter);
+        wifiManager.startScan();
+
+        wifiCountView.setText("Number of Wifi: " + null);
+        wifiAverageStrengthView.setText("Average wifi strength: " + null);
 
         // GNSS
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
         locationManager.registerGnssMeasurementsCallback(gnssMeasurementsEventCallback);
-        locationManager.registerGnssStatusCallback(gnssStatusCallback);
 
         satelliteCountView = findViewById(R.id.satelliteCountView);
         satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
         satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
-        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
-        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
 
         satelliteCountView.setText("Number of satellite: " + null);
         satelliteCnrMeanView.setText("CNR mean: " + null);
         satelliteCnrVarianceView.setText("CNR variance: " + null);
-        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
-        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
@@ -132,11 +150,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         magnetView = findViewById(R.id.magnetView);
         magnetVarianceView = findViewById(R.id.magnetVarianceView);
 
-        // TEMPERATURE
-        Sensor temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
-        sensorManager.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        temperatureView = findViewById(R.id.temperatureView);
-
         // TIME
         Handler handler = new Handler();
         int delay = 1000; // 1000 milliseconds == 1 second
@@ -145,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetometerObservatory.computeAverage();
                 magnetometerObservatory.computeVariance();
                 magnetVarianceView.setText("Magnet variance: " + magnetometerObservatory.getVariance());
+                wifiManager.startScan();
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -183,10 +197,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetView.setText("Gauss: " + magnetValue);
                 magnetometerObservatory.log(magnetValue);
                 break;
-
-            case Sensor.TYPE_AMBIENT_TEMPERATURE:
-                temperatureView.setText("Temperature: " + x);
-                break;
         }
         evaluate();
     }
@@ -198,14 +208,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void evaluate() {
         if (!isMoving) return;
 
-        double lightWeight = 0.325;
-        double gnssWeight = 0.400;
-        double magnetWeight = 0.275;
+        double lightWeight = 0.295;
+        double gnssWeight = 0.370;
+        double magnetWeight = 0.205;
+        double wifiWeight = 0.130;
 
         evaluateSensors();
 
-        double prob = lightWeight * lightProb + gnssWeight * gnssProb + magnetWeight * magnetProb;
-        calculationView.setText(String.format("(%s * %s) + (%s * %s) + (%s * %s) = %s", lightWeight, lightProb, gnssWeight, gnssProb, magnetWeight, magnetProb, prob));
+        double prob = lightWeight * lightProb + gnssWeight * gnssProb + magnetWeight * magnetProb + wifiWeight * wifiProb;
+        calculationView.setText(String.format("Gnss: (%s * %s) + \nLight: (%s * %s) + \nMagnet: (%s * %s) + \nWifi: (%s * %s) = \nTotal: %s", gnssProb, gnssWeight, lightProb, lightWeight, magnetProb, magnetWeight, wifiProb, wifiWeight, prob));
 
         if (prob == 0.5) {
             setLoading();
@@ -220,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         evaluateLight();
         evaluateGnss();
         evaluateMagnet();
+        evaluateWifi();
     }
 
     // indoor = 1; outdoor = 0
@@ -256,6 +268,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double cGnss = 1.25;
 
         gnssProb = numVisibleSatellite < 0 ? 0.5 : minMax(mGnss * numVisibleSatellite + cGnss);
+    }
+
+    // indoor = 1; outdoor = 0
+    // Threshold: (Indoor) 0-25-50 (Outdoor)
+    // Threshold: (Indoor) 75-82.5-90 (Outdoor)
+    public void evaluateWifi() {
+        double countWeight = 0.5;
+        double mWifiCount = -0.02;
+        double cWifiCount = 1;
+        double countProb = countWeight * minMax(mWifiCount * numVisibleAp + cWifiCount);
+
+        double strengthWeight = 0.5;
+        double mWifiStrength = 1.0 / 15;
+        double cWifiStrength = 6;
+        double strengthProb = strengthWeight * minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
+
+        wifiProb = countProb + strengthProb;
     }
 
     public double minMax(double score) {
