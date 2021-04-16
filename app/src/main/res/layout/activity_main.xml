@@ -5,7 +5,7 @@
 
     <LinearLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="38sp"
         tools:context=".MainActivity">
@@ -67,6 +67,18 @@
 
         <TextView
             android:id="@+id/magnetVarianceView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
+
+        <TextView
+            android:id="@+id/wifiCountView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38sp" />
+
+        <TextView
+            android:id="@+id/wifiAverageStrengthView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="38sp" />
