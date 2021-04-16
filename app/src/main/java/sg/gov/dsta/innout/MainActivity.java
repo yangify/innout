@@ -7,7 +7,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
-import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -35,8 +34,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int numVisibleSatellite = -1;
     private float lightValue;
 
-    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVarianceView, temperatureView;
-    private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView, satelliteStatusCountView, satelliteAzimuthView;
+    private TextView resultView, calculationView, walkView, lightView, proximityView, magnetView, magnetVarianceView;
+    private TextView satelliteCountView, satelliteCnrMeanView, satelliteCnrVarianceView;
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isMoving = false;
@@ -62,24 +61,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
 
             satelliteCountView.setText("Number of satellite: " + numVisibleSatellite);
-//            satelliteCnrMeanView.setText("CNR mean: " + cnrAverage);
-//            satelliteCnrVarianceView.setText("CNR variance: " + cnrVariance);
-        }
-    };
-
-    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
-        @Override
-        public void onSatelliteStatusChanged(GnssStatus status) {
-            int numStatusSatellite = status.getSatelliteCount();
-
-            double moreThanNinety = 0;
-            for (int i = 0; i < numStatusSatellite; i++) {
-                moreThanNinety += status.getAzimuthDegrees(i) > 90 ? 1 : 0;
-            }
-            double proportionMoreThanNinety = moreThanNinety / numStatusSatellite;
-
-//            satelliteStatusCountView.setText("Number of satellite by status: " + numStatusSatellite);
-//            satelliteAzimuthView.setText("Proportion more than 90 degree: " + String.format("%.4f", proportionMoreThanNinety));
+            satelliteCnrMeanView.setText("CNR mean: " + cnrAverage);
+            satelliteCnrVarianceView.setText("CNR variance: " + cnrVariance);
         }
     };
 
@@ -93,19 +76,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // GNSS
         locationManager.registerGnssMeasurementsCallback(gnssMeasurementsEventCallback);
-        locationManager.registerGnssStatusCallback(gnssStatusCallback);
 
         satelliteCountView = findViewById(R.id.satelliteCountView);
-//        satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
-//        satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
-//        satelliteStatusCountView = findViewById(R.id.satelliteStatusCountView);
-//        satelliteAzimuthView = findViewById(R.id.satelliteAzimuthView);
+        satelliteCnrMeanView = findViewById(R.id.satelliteCnrMeanView);
+        satelliteCnrVarianceView = findViewById(R.id.satelliteCnrVarianceView);
 
         satelliteCountView.setText("Number of satellite: " + null);
-//        satelliteCnrMeanView.setText("CNR mean: " + null);
-//        satelliteCnrVarianceView.setText("CNR variance: " + null);
-//        satelliteStatusCountView.setText("Number of satellite by status: " + 0);
-//        satelliteAzimuthView.setText("Proportion more than 90 degree: " + 0);
+        satelliteCnrMeanView.setText("CNR mean: " + null);
+        satelliteCnrVarianceView.setText("CNR variance: " + null);
 
         SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         resultView = findViewById(R.id.resultView);
@@ -131,11 +109,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.registerListener(this, magnetSensor, SensorManager.SENSOR_DELAY_NORMAL);
         magnetView = findViewById(R.id.magnetView);
         magnetVarianceView = findViewById(R.id.magnetVarianceView);
-
-        // TEMPERATURE
-        Sensor temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
-        sensorManager.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        temperatureView = findViewById(R.id.temperatureView);
 
         // TIME
         Handler handler = new Handler();
@@ -182,10 +155,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetometerObservatory.log(magnetValue);
                 magnetView.setText("Gauss: " + magnetValue);
                 magnetometerObservatory.log(magnetValue);
-                break;
-
-            case Sensor.TYPE_AMBIENT_TEMPERATURE:
-                temperatureView.setText("Temperature: " + x);
                 break;
         }
         evaluate();
