@@ -17,11 +17,15 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -36,9 +40,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private double gnssProb, lightProb, magnetProb, wifiProb = 0.5;
 
     private int numVisibleSatellite = -1;
+    private double cnrAverage = 0.0;
+    private double cnrVariance = 0.0;
+    private float lightValue;
     private int numVisibleAp = -1;
     private double meanWifiStrength = -1;
-    private float lightValue;
 
     private TextView resultView, calculationView, walkView, proximityView;
     private TextView lightView, magnetView, magnetVarianceView;
@@ -60,12 +66,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Collection<GnssMeasurement> measurements = event.getMeasurements();
             numVisibleSatellite = measurements.size();
 
-            double cnrAverage = 0;
+            cnrAverage = 0;
             for (GnssMeasurement gnssMeasurement : measurements) {
                 cnrAverage += gnssMeasurement.getCn0DbHz() / numVisibleSatellite;
             }
 
-            double cnrVariance = 0;
+            cnrVariance = 0;
             for (GnssMeasurement gnssMeasurement : measurements) {
                 cnrVariance += Math.pow(gnssMeasurement.getCn0DbHz() - cnrAverage, 2) / numVisibleSatellite;
             }
@@ -159,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetometerObservatory.computeVariance();
                 magnetVarianceView.setText("Magnet variance: " + magnetometerObservatory.getVariance());
                 wifiManager.startScan();
+                logData();
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -301,6 +308,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public void setOutdoor() {
         resultView.setText("OUTDOOR");
+    }
+
+    private void logData() {
+        String data = LocalDateTime.now().withNano(0) +
+                "," +
+                numVisibleSatellite +
+                "," +
+                cnrAverage +
+                "," +
+                cnrVariance +
+                "," +
+                lightValue +
+                "," +
+                magnetometerObservatory.getVariance() +
+                "," +
+                numVisibleAp +
+                "," +
+                meanWifiStrength;
+        writeToFile(data + "\n");
+    }
+
+    private void writeToFile(String data) {
+        File path = getFilesDir();
+        File file = new File(path, "data.csv");
+        try (FileOutputStream stream = new FileOutputStream(file, true)) {
+            stream.write(data.getBytes());
+        } catch (IOException e) {
+            Log.d(TAG, e.getMessage());
+        }
     }
 
     @Override
