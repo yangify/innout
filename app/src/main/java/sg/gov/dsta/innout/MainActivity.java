@@ -291,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double cWifiStrength = 6;
         double strengthProb = strengthWeight * minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
 
-        wifiProb = countProb + strengthProb;
+        wifiProb = minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
     }
 
     public double minMax(double score) {
