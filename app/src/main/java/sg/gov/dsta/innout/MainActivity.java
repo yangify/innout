@@ -217,8 +217,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         double lightWeight = 0.295;
         double gnssWeight = 0.370;
-        double magnetWeight = 0.130;
-        double wifiWeight = 0.205;
+        double magnetWeight = 0.100;
+        double wifiWeight = 0.235;
 
         evaluateSensors();
 
