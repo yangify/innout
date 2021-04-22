@@ -1,28 +1,22 @@
-package sg.gov.dsta.innout;
+package sg.gov.dsta.innout.observatory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MagnetometerObservatory {
+public abstract class TimeBasedObservatory {
 
-    private static MagnetometerObservatory instance;
     private final Map<LocalDateTime, List<Float>> observations;
+    private final Integer WINDOW = 5;
     private final Integer DELTA = 10;
 
     private Integer numObservations = 0;
     private float average = 0;
     private Float variance;
 
-    private MagnetometerObservatory() {
-        observations = new HashMap<>();
-    }
-
-    public static MagnetometerObservatory getInstance() {
-        if (instance == null) instance = new MagnetometerObservatory();
-        return instance;
+    protected TimeBasedObservatory(Map<LocalDateTime, List<Float>> observations) {
+        this.observations = observations;
     }
 
     public void computeAverage() {
@@ -59,7 +53,7 @@ public class MagnetometerObservatory {
 
     public void purge(LocalDateTime currentTime) {
         if (observations.size() <= DELTA) return;
-        LocalDateTime toBeRemoved = currentTime.minusSeconds(5);
+        LocalDateTime toBeRemoved = currentTime.minusSeconds(WINDOW);
         numObservations -= observations.get(toBeRemoved).size();
         observations.remove(toBeRemoved);
     }
