@@ -35,7 +35,7 @@ import sg.gov.dsta.innout.observatory.MagnetometerObservatory;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
-    private final String TAG = "MAIN_ACTIVITY";
+    private final String TAG = "MAIN ACTIVITY";
 
     private double gnssProb, lightProb, magnetProb, wifiProb = 0.5;
 
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private final boolean isDay = LocalDateTime.now().getHour() >= 7 && LocalDateTime.now().getHour() <= 19;
     private boolean isMoving = false;
-    private boolean isCovered = true;
+    private boolean isCovered = false;
 
     private final MagnetometerObservatory magnetometerObservatory = MagnetometerObservatory.getInstance();
     private final AccelerometerObservatory accelerometerObservatory = AccelerometerObservatory.getInstance();
