@@ -269,12 +269,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     // indoor = 1; outdoor = 0
-    // Threshold: (Indoor) 1-7-15 (Outdoor)
+    // Threshold: (Indoor) 1-7-15 (Outdoor) - Count
+    // Threshold: (Indoor) 20 - 27.5 - 35 (Outdoor) - MeanCnr
     public void evaluateGnss() {
-        double mGnss = -0.083333;
-        double cGnss = 1.25;
+        double countWeight = 0.9;
+        double mCount = -0.083333;
+        double cCount = 1.25;
+        double countProb = countWeight * (numVisibleSatellite < 0 ? 0.5 : minMax(mCount * numVisibleSatellite + cCount));
 
-        gnssProb = numVisibleSatellite < 0 ? 0.5 : minMax(mGnss * numVisibleSatellite + cGnss);
+        double cnrWeight = 0.1;
+        double mCnr = -1.0 / 15;
+        double cCnr = 7.0 / 3;
+        double cnrProb = cnrWeight * (cnrAverage < 0 ? 0.5 : minMax(mCnr * cnrAverage + cCnr));
+
+        gnssProb = countProb + cnrProb;
     }
 
     // indoor = 1; outdoor = 0
@@ -291,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double cWifiStrength = 6;
         double strengthProb = strengthWeight * minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
 
-        wifiProb = meanWifiStrength < 0 ? 0.5 : minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
+        wifiProb = meanWifiStrength == -1 ? 0.5 : minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
     }
 
     public double minMax(double score) {
