@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 magnetometerObservatory.computeVariance();
                 magnetVarianceView.setText("Magnet variance: " + magnetometerObservatory.getVariance());
                 wifiManager.startScan();
-                logData();
+//                logData();
                 handler.postDelayed(this, delay);
             }
         }, delay);
@@ -217,8 +217,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         double lightWeight = 0.295;
         double gnssWeight = 0.370;
-        double magnetWeight = 0.205;
-        double wifiWeight = 0.130;
+        double magnetWeight = 0.130;
+        double wifiWeight = 0.205;
 
         evaluateSensors();
 
@@ -291,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         double cWifiStrength = 6;
         double strengthProb = strengthWeight * minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
 
-        wifiProb = minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
+        wifiProb = meanWifiStrength < 0 ? 0.5 : minMax(mWifiStrength * meanWifiStrength + cWifiStrength);
     }
 
     public double minMax(double score) {
