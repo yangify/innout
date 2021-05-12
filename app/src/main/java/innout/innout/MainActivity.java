@@ -248,7 +248,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // indoor = 1; outdoor = 0
     // Threshold: (Night indoor) 100 - 1000 (Day indoor)
     public void evaluateLight() {
-        if (isCovered) return;
+        if (isCovered) {
+            lightProb = 0.5;
+            return;
+        }
 
         double mDay = -0.001;
         double cDay = 1.5;
