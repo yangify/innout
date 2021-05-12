@@ -1,4 +1,4 @@
-package sg.gov.dsta.innout;
+package innout.innout;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -30,14 +30,18 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-import sg.gov.dsta.innout.observatory.AccelerometerObservatory;
-import sg.gov.dsta.innout.observatory.MagnetometerObservatory;
+import innout.innout.observatory.AccelerometerObservatory;
+import innout.innout.observatory.MagnetometerObservatory;
+import innout.R;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private final String TAG = "MAIN ACTIVITY";
 
-    private double gnssProb, lightProb, magnetProb, wifiProb = 0.5;
+    private double gnssProb = 0.5;
+    private double lightProb = 0.5;
+    private double magnetProb = 0.5;
+    private double wifiProb = 0.5;
 
     private int numVisibleSatellite = -1;
     private double cnrAverage = 0.0;

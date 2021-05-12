@@ -8,7 +8,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="38sp"
-        tools:context=".MainActivity">
+        tools:context="innout.innout.MainActivity">
 
         <TextView
             android:id="@+id/resultView"
